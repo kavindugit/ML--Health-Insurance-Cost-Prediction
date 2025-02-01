@@ -5,6 +5,7 @@ from prediction_helper import predict
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
+astype_fn = np.astype
 
 # Dummy prediction function (Replace with actual model)
 def predict_insurance_cost(inputs):
