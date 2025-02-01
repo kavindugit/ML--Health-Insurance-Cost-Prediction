@@ -1,108 +1,60 @@
-import pandas as pd
-from joblib import load
+import streamlit as st
 import numpy as np
+import pandas as pd
+from prediction_helper import predict
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
-# Load models and scalers
-model_rest = load("artifacts/model_rest.joblib")
-model_young = load("artifacts/model_young.joblib")
 
-scaler_rest = load("artifacts/scaler_rest.joblib")
-scaler_young = load("artifacts/scaler_young.joblib")
 
-def calculate_risk_score(medical_history):
-    risk_scores = {
-        "diabetes": 6,
-        "heart disease": 8,
-        "high blood pressure": 6,
-        "thyroid": 5,
-        "no disease": 0,
-        "none": 0
-    }
-    diseases = medical_history.lower().split(" & ")
+# Dummy prediction function (Replace with actual model)
+def predict_insurance_cost(inputs):
+    return np.random.randint(20000, 100000)  # Random prediction for demo
 
-    total_risk_score = sum(risk_scores.get(disease, 0) for disease in diseases)
+# Streamlit UI
+st.title("Health Insurance Cost Predictor")
 
-    max_score = 14
-    min_score = 0
+# Layout using columns
+col1, col2, col3 = st.columns(3)
 
-    normalized_risk_score = (total_risk_score - min_score) / (max_score - min_score)
+with col1:
+    age = st.number_input("Age", min_value=18,step =1 ,  max_value=100)
+    genetical_risk = st.number_input("Genetical Risk", min_value=0, step=1, max_value=5)
+    gender = st.selectbox("Gender", ["Male", "Female"])
+    smoking_status = st.selectbox("Smoking Status", ["No Smoking", "Regular", "Occasional"])
 
-    return normalized_risk_score
+with col2:
+    number_of_dependants = st.number_input("Number of Dependants", min_value=0,step =1 , max_value=20)
+    insurance_plan = st.selectbox("Insurance Plan", ["Bronze", "Silver", "Gold"])
+    marital_status = st.selectbox("Marital Status", ["Unmarried", "Married"])
+    region = st.selectbox("Region", ["Northwest", "Southeast", "Southwest", "Northeast"])
 
-def hot_encoding(df):
-    required_columns = [
-        'gender_Male', 'region_Northwest', 'region_Southeast', 'region_Southwest',
-        'marital_status_Unmarried', 'bmi_category_Obesity', 'bmi_category_Overweight',
-        'bmi_category_Underweight', 'smoking_status_Occasional', 'smoking_status_Regular',
-        'employment_status_Salaried', 'employment_status_Self-Employed'
-    ]
+with col3:
+    income_lakhs = st.number_input("Income in Lakhs", min_value=0,step = 1 ,  max_value=200)
+    employment_status = st.selectbox("Employment Status", ["Salaried", "Self-Employed", "Freelancer", "nan"])
+    bmi_category = st.selectbox("BMI Category", ["Normal", "Obesity", "Overweight", "Underweight"])
+    medical_history = st.selectbox("Medical History", [
+        "Diabetes", "High blood pressure", "No Disease", "Diabetes & High blood pressure", "Thyroid",
+        "Heart disease", "High blood pressure & Heart disease", "Diabetes & Thyroid", "Diabetes & Heart disease"
+    ])
 
-    # Initialize new columns with 0
-    for col in required_columns:
-        df[col] = 0
 
-    # Apply one-hot encoding manually
-    df['gender_Male'] = (df['gender'] == 'Male').astype(int)
-    df['region_Northwest'] = (df['region'] == 'Northwest').astype(int)
-    df['region_Southeast'] = (df['region'] == 'Southeast').astype(int)
-    df['region_Southwest'] = (df['region'] == 'Southwest').astype(int)
-    df['marital_status_Unmarried'] = (df['marital_status'] == 'Unmarried').astype(int)
-    df['bmi_category_Obesity'] = (df['bmi_category'] == 'Obesity').astype(int)
-    df['bmi_category_Overweight'] = (df['bmi_category'] == 'Overweight').astype(int)
-    df['bmi_category_Underweight'] = (df['bmi_category'] == 'Underweight').astype(int)
-    df['smoking_status_Occasional'] = (df['smoking_status'] == 'Occasional').astype(int)
-    df['smoking_status_Regular'] = (df['smoking_status'] == 'Regular').astype(int)
-    df['employment_status_Salaried'] = (df['employment_status'] == 'Salaried').astype(int)
-    df['employment_status_Self-Employed'] = (df['employment_status'] == 'Self-Employed').astype(int)
 
-    # Drop the original categorical columns
-    df.drop(['gender', 'region', 'marital_status', 'bmi_category', 'smoking_status', 'employment_status'], axis=1, inplace=True)
+input_dict = {
+    "age": age,
+    "gender": gender,
+    "marital_status": marital_status,
+    "number_of_dependants": number_of_dependants,
+    "bmi_category": bmi_category,
+    "smoking_status": smoking_status,
+    "employment_status": employment_status,
+    "income_lakhs": income_lakhs,
+    "region": region,
+    "medical_history": medical_history,
+    "insurance_plan": insurance_plan,
+    "genetical_risk": genetical_risk,
+}
 
-    return df
-
-def preprocess_input(input_dict):
-    df = pd.DataFrame([input_dict])
-
-    # medical_risk_score
-    df["normalized_risk_score"] = calculate_risk_score(input_dict['medical_history'])
-
-    # map insurance_plan
-    df["insurance_plan"] = df["insurance_plan"].map({'Bronze': 1, 'Silver': 2, 'Gold': 3})
-
-    # One-hot encoding
-    df_encoded = hot_encoding(df)
-
-    # Scale the input
-    df_final = handle_scaling(input_dict['age'], df_encoded)
-
-    df_final.drop('medical_history', axis=1, inplace=True)
-    return df_final
-
-def handle_scaling(age, df):
-    if age <= 25:
-        scaler_object = scaler_young
-    else:
-        scaler_object = scaler_rest
-
-    cols_to_scale = scaler_object['cols_to_scale']
-    scaler = scaler_object['scaler']
-    
-    # Initialize income_level with np.nan instead of None
-    df['income_level'] = np.nan  # Use np.nan to indicate missing values
-
-    # Apply scaling
-    df[cols_to_scale] = scaler.transform(df[cols_to_scale])
-    
-    # Drop income_level column after scaling
-    df.drop('income_level', axis=1, inplace=True)
-    
-    return df
-
-def predict(input_dict):
-    input_df = preprocess_input(input_dict)
-    if input_dict['age'] <= 25:
-        prediction = model_young.predict(input_df)
-    else:
-        prediction = model_rest.predict(input_df)
-
-    return int(prediction)
+if st.button('Predict'):
+    prediction = predict(input_dict)
+    st.success(f"Predicted Insurance Cost: {prediction}")
