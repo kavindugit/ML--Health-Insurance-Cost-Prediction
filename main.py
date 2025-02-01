@@ -1,3 +1,6 @@
+import os
+os.system('streamlit run app.py')
+
 import streamlit as st
 import numpy as np
 import pandas as pd
