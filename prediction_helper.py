@@ -1,10 +1,8 @@
 import pandas as pd
 from joblib import load
-#from numpy.array_api import astype
 import numpy as np
 
-
-
+# Load models and scalers
 model_rest = load("artifacts/model_rest.joblib")
 model_young = load("artifacts/model_young.joblib")
 
@@ -22,7 +20,7 @@ def calculate_risk_score(medical_history):
     }
     diseases = medical_history.lower().split(" & ")
 
-    total_risk_score = sum(risk_scores.get(disease,0) for disease in diseases)
+    total_risk_score = sum(risk_scores.get(disease, 0) for disease in diseases)
 
     max_score = 14
     min_score = 0
@@ -31,10 +29,7 @@ def calculate_risk_score(medical_history):
 
     return normalized_risk_score
 
-
-
 def hot_encoding(df):
-
     required_columns = [
         'gender_Male', 'region_Northwest', 'region_Southeast', 'region_Southwest',
         'marital_status_Unmarried', 'bmi_category_Obesity', 'bmi_category_Overweight',
@@ -61,12 +56,9 @@ def hot_encoding(df):
     df['employment_status_Self-Employed'] = (df['employment_status'] == 'Self-Employed').astype(int)
 
     # Drop the original categorical columns
-    df.drop(['gender', 'region', 'marital_status', 'bmi_category', 'smoking_status', 'employment_status'], axis=1,
-            inplace=True)
-
+    df.drop(['gender', 'region', 'marital_status', 'bmi_category', 'smoking_status', 'employment_status'], axis=1, inplace=True)
 
     return df
-
 
 def preprocess_input(input_dict):
     df = pd.DataFrame([input_dict])
@@ -86,10 +78,7 @@ def preprocess_input(input_dict):
     df_final.drop('medical_history', axis=1, inplace=True)
     return df_final
 
-
-
-
-def handle_scaling(age , df):
+def handle_scaling(age, df):
     if age <= 25:
         scaler_object = scaler_young
     else:
@@ -97,22 +86,23 @@ def handle_scaling(age , df):
 
     cols_to_scale = scaler_object['cols_to_scale']
     scaler = scaler_object['scaler']
-    df['income_level'] = None
+    
+    # Initialize income_level with np.nan instead of None
+    df['income_level'] = np.nan  # Use np.nan to indicate missing values
+
+    # Apply scaling
     df[cols_to_scale] = scaler.transform(df[cols_to_scale])
+    
+    # Drop income_level column after scaling
     df.drop('income_level', axis=1, inplace=True)
+    
     return df
-
-
-
-
 
 def predict(input_dict):
     input_df = preprocess_input(input_dict)
-    if(input_dict['age'] <= 25):
+    if input_dict['age'] <= 25:
         prediction = model_young.predict(input_df)
     else:
         prediction = model_rest.predict(input_df)
 
     return int(prediction)
-
-
