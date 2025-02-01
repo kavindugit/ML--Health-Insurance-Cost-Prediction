@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from prediction_helper import predict
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 # Dummy prediction function (Replace with actual model)
