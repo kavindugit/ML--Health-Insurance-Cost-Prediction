@@ -2,6 +2,8 @@ import pandas as pd
 from joblib import load
 from numpy.array_api import astype
 
+astype_fn = np.astype
+
 model_rest = load("artifacts/model_rest.joblib")
 model_young = load("artifacts/model_young.joblib")
 
