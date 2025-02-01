@@ -83,17 +83,15 @@ The model is deployed using Streamlit on the cloud, allowing users to input thei
 
 🏗️ Installation & Setup
 
-    Clone the repository:
+Clone the repository:
 
-git clone https://github.com/yourusername/health-insurance-premium-prediction.git
-cd health-insurance-premium-prediction
+    git clone https://github.com/yourusername/health-insurance-premium-prediction.git
+    cd health-insurance-premium-prediction
 
 Install dependencies:
-
-pip install -r requirements.txt
+    pip install -r requirements.txt
 
 Run the application:
-
     streamlit run app.py
 
 🔥 Future Improvements
