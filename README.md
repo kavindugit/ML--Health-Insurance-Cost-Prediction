@@ -21,6 +21,7 @@ Features:
 This dataset provides a rich set of features to analyze the factors affecting insurance premium pricing.
 
 🚀 Project Steps
+
 1️⃣ Data Preprocessing & EDA
 
     Cleaned the dataset by handling missing values and outliers.
